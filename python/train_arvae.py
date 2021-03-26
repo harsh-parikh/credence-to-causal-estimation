@@ -8,7 +8,7 @@ import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TestTubeLogger
 
-sns.set()
+sns.set(font_scale=1.25)
 
 
 def train(data, hyper_params, input_checkpoint_path=None, output_checkpoint_path='ar_vae.ckpt', M_N=1):
@@ -44,12 +44,7 @@ def train(data, hyper_params, input_checkpoint_path=None, output_checkpoint_path
 
     # Trainer
     runner = Trainer(max_epochs=max_epochs,
-                     logger=tt_logger,
-                     log_save_interval=50,
-                     train_percent_check=1.,
-                     val_percent_check=1.,
-                     num_sanity_val_steps=100,
-                     early_stop_callback=False)
+                     logger=tt_logger)
 
     runner.fit(vae_model)
 
@@ -180,7 +175,7 @@ def plot(data, vae_model, post_intervention_vae_model=None, T0=None, out_folder=
     for i in range(data.shape[1]):
         fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(35, 20))
 
-        ax[0, 0].plot(np.arange(0, T+vae_model.lag), (S).detach().numpy()[:, i, :], alpha=0.5)
+        ax[0, 0].plot(np.arange(0, T+vae_model.lag), (S).detach().numpy()[:, i, :])
         ax[0, 0].set_ylabel('Normalized (Outcome)')
         ax[0, 0].set_xlabel('Time Steps')
         ax[0, 0].title.set_text('Simulated X')
