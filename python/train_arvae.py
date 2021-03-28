@@ -127,11 +127,12 @@ def generate_example_sample(vae_model, targets, adjust, T, B, N, latent_values=N
 
     s = vae_model.decode(nz).detach().numpy()
     s = s.squeeze(axis=0)
+    
     targets_var = rescale(s, targets, adjust, T, B, N)
 
     neg_adj = np.min(targets_var, axis=0)
-    neg_adj[neg_adj > 0] = 0
-    targets_var = targets_var - neg_adj
+#     neg_adj[neg_adj > 0] = 0
+#     targets_var = targets_var - neg_adj
 
     return targets_var
 
