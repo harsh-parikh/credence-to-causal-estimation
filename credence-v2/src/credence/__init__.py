@@ -67,9 +67,6 @@ class Credence:
         )  # .to('cuda:0')
         bar = pb.ProgressBar()
         self.trainer_treat = pl.Trainer(
-            gpus=1,
-            precision=16,
-            limit_train_batches=0.5,
             max_epochs=max_epochs,
             callbacks=[bar],
         )
@@ -91,9 +88,6 @@ class Credence:
 
         bar = pb.ProgressBar()
         self.trainer_pre = pl.Trainer(
-            gpus=1,
-            precision=16,
-            limit_train_batches=0.5,
             max_epochs=max_epochs,
             callbacks=[bar],
         )
@@ -119,9 +113,6 @@ class Credence:
 
         bar = pb.ProgressBar()
         self.trainer_post = pl.Trainer(
-            gpus=1,
-            precision=16,
-            limit_train_batches=0.5,
             max_epochs=max_epochs,
             callbacks=[bar],
         )
@@ -133,20 +124,30 @@ class Credence:
         return [self.m_treat, self.m_pre, self.m_post]
     
     # sample from generator
-    def sample(self, num_samples=1000):
+    def sample(self, num_samples=1000, data=None):
         # initializing latent variables from standard normal distribution
-        pi_treat = (
-            torch.zeros((num_samples, self.m_treat.latent_dim)),
-            torch.zeros((num_samples, self.m_treat.latent_dim)),
-        )
-        pi_pre = (
-            torch.zeros((num_samples, self.m_pre.latent_dim)),
-            torch.zeros((num_samples, self.m_pre.latent_dim)),
-        )
-        pi_post = (
-            torch.zeros((num_samples, self.m_post.latent_dim)),
-            torch.zeros((num_samples, self.m_post.latent_dim)),
-        )
+        if data is None:
+            pi_treat = (
+                torch.zeros((num_samples, self.m_treat.latent_dim)),
+                torch.zeros((num_samples, self.m_treat.latent_dim)),
+            )
+            pi_pre = (
+                torch.zeros((num_samples, self.m_pre.latent_dim)),
+                torch.zeros((num_samples, self.m_pre.latent_dim)),
+            )
+            pi_post = (
+                torch.zeros((num_samples, self.m_post.latent_dim)),
+                torch.zeros((num_samples, self.m_post.latent_dim)),
+            )
+            
+        else:
+            num_samples = data.shape[0]
+            T = torch.tensor(data[self.Tnames].values.astype(float)).float()
+            Y = torch.tensor(data[self.Ynames].values.astype(float)).float()
+            X = torch.tensor(data[self.Xnames].values.astype(float)).float()
+            pi_treat = self.m_treat.forward(T)
+            pi_pre = self.m_pre.forward(X)
+            pi_post = self.m_post.forward(Y)
         
         # sample from conVAE
         Tgen = self.m_treat.sample(pi=pi_treat, x=torch.empty(size=(num_samples, 0)))
