@@ -153,14 +153,16 @@ class Credence:
         Tgen = self.m_treat.sample(pi=pi_treat, x=torch.empty(size=(num_samples, 0)))
         Xgen = self.m_pre.sample(pi=pi_pre, x=Tgen)
         Ygen = self.m_post.sample(pi=pi_post, x=torch.cat((Xgen, Tgen), 1))
+        Ygen_prime = self.m_post.sample(pi=pi_post, x=torch.cat((Xgen, 1-Tgen), 1))
         
         # wrapping in a dataframe
         df = pd.DataFrame(Xgen.detach().numpy(), columns=self.Xnames)
         df_T = pd.DataFrame(Tgen.detach().numpy(), columns=self.Tnames)
-        df_Y = pd.DataFrame(Ygen.detach().numpy())
+        df_Y = pd.DataFrame(Ygen.detach().numpy(),columns=['Y%d'%i for i in range(Ygen.detach().numpy().shape[1])])
+        df_Y_prime = pd.DataFrame(Ygen_prime.detach().numpy(),columns=['Yprime%d'%i for i in range(Ygen.detach().numpy().shape[1])])
         df = df.join(df_T).join(df_Y)
-
-        return df
+        df_prime = df.join(df_Y_prime)
+        return df, df_prime
 
     def preprocess(
         self, df, post_treatment_var, treatment_var, categorical_var, numerical_var
