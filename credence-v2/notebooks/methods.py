@@ -26,9 +26,10 @@ from rpy2.robjects.packages import SignatureTranslatedAnonymousPackage
 import rpy2.robjects.numpy2ri
 rpy2.robjects.numpy2ri.activate()
 from rpy2.robjects import r, pandas2ri
+
 pandas2ri.activate()
 
-def matchit(outcome, treatment, data, method='nearest',replace=False):
+def matchit(outcome, treatment, data, method='nearest', distance='glm', replace=False):
     if replace:
         replace = 'TRUE'
     else:
@@ -53,12 +54,12 @@ def matchit(outcome, treatment, data, method='nearest',replace=False):
     
     data2 <- data
     data2$%s <- 1 - data2$%s
-    r2 <- matchit( %s, method = "%s", data = data2, replace = %s)
+    r2 <- matchit( %s, method = "%s", distance="%s", data = data2, replace = %s)
     matrix2 <- r2$match.matrix[,]
     names2 <- as.numeric(names(r2$match.matrix[,]))
     mtch2 <- data2[as.numeric(names(r2$match.matrix[,])),]
     hh2 <- data2[as.numeric(r2$match.matrix[,]),'%s'] - data2[as.numeric(names(r2$match.matrix[,])),'%s']
-    """%( formula_cov,method,replace,outcome,outcome, treatment, treatment, formula_cov,method,replace,outcome,outcome)
+    """%( formula_cov,method,distance,replace,outcome,outcome, treatment, treatment, formula_cov,method,replace,outcome,outcome)
     
     psnn = SignatureTranslatedAnonymousPackage(string, "powerpack")
     match = psnn.mtch
@@ -141,18 +142,28 @@ def doubleRobust(outcome,treatment,data):
 
 def tmle(outcome,treatment,data):
     tml = TMLE(data, exposure=treatment, outcome=outcome)
-    return point
+    cols = data.drop(columns=[outcome, treatment]).columns
+    s = str(cols[0])
+    for j in range(1,len(cols)):
+        s = s + ' + ' + str(cols[j])
+    tml.exposure_model('')
+    tml.outcome_model('male + age0 + age_rs1 + age_rs2 + cd40 + cd4_rs1 + cd4_rs2 + dvl0')
+    tml.fit()
+    return tml.average_treatment_effect
 
 def estimate_ate(outcome, treatment, data):
-    ate_gbr_dml = dml(outcome, treatment, data, method='GBR', n_estimators=100)
-    ate_linear_dml = dml(outcome, treatment, data, method='linear', n_estimators=100)
-    ate_dr = doubleRobust(outcome, treatment, data)
-    ate_linear_t_learner = metalearner(outcome,treatment, data, est='T', method='linear')
-    ate_linear_s_learner = metalearner(outcome,treatment, data, est='S', method='linear')
-    ate_linear_x_learner = metalearner(outcome,treatment, data, est='X', method='linear')
-    ate_bart = bart(outcome,treatment, data)
-    ate_psm = matchit(outcome,treatment, data, method='propensity')
-    ate_knn = matchit(outcome,treatment, data, method='nearest')
-    ate_tmle = tmle(outcome, treatment, data)
+    ate = {}
+    ate['gbr_dml'] = dml(outcome, treatment, data, method='GBR', n_estimators=100)
+    ate['linear_dml'] = dml(outcome, treatment, data, method='linear', n_estimators=100)
+    ate['dr'] = doubleRobust(outcome, treatment, data)
+    ate['linear_t_learner'] = metalearner(outcome,treatment, data, est='T', method='linear')
+    ate['linear_s_learner'] = metalearner(outcome,treatment, data, est='S', method='linear')
+    ate['linear_x_learner'] = metalearner(outcome,treatment, data, est='X', method='linear')
+    ate['bart'] = bart(outcome,treatment, data)
+    ate['psm'] = matchit(outcome,treatment, data, method='nearest', distance='bart')
+    ate['knn'] = matchit(outcome,treatment, data, method='nearest', distance='mahalanobis')
+    ate['tmle'] = tmle(outcome, treatment, data)
+    return pd.DataFrame.from_dict( ate, orient='index' )
+    
     
     
