@@ -11,8 +11,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from econml.dml import NonParamDML, LinearDML
-from econml.dr import DRLearner
+# from econml.dml import NonParamDML, LinearDML
+# from econml.dr import DRLearner
 from sklearn.linear_model import LinearRegression, RidgeCV, LogisticRegressionCV
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingRegressor, GradientBoostingClassifier
 from econml.metalearners import TLearner, SLearner, XLearner, DomainAdaptationLearner
