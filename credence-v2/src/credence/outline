@@ -1,0 +1,26 @@
+Introduction
+--> Motivation 
+--> Primary Notation 
+--> Contributions
+
+Literature Review (Harsh)
+--> 4 parts for each relevant literature
+
+Theory [focal point]
+--> Secondary Notation
+--> Assumptions (State all the assumptions)
+--> Necessary assumptions for testing and double resilience (Identification)
+--> Necessary assumptions for ATE estimation and triple resilience (Identification)
+
+Empirical Properties
+--> Test: Power
+--> ATE experiments (if we want)
+
+STAR Analysis (Harsh)
+--> Data Description
+--> Test
+--> Confounding Analysis
+--> ATE estimation
+
+Discussion
+
