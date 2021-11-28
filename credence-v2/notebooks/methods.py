@@ -205,7 +205,7 @@ def estimate_ate(outcome, treatment, data):
 
 def bootstrap_ate_inference(outcome, treatment, data, repeats=10):
     ate = pd.DataFrame()
-    for itr in tqdm.tqdm(range(repeats)):
+    for itr in tqdm.tqdm(range(repeats),leave=False):
         data_ = data.sample(frac=1, replace=True)
         ate_ = estimate_ate(outcome, treatment, data_.reset_index(drop=True))
         ate = ate.append(ate_,ignore_index=True)

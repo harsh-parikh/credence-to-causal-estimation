@@ -43,8 +43,8 @@ class Credence:
     # train generator
     def fit(
         self,
-        latent_dim=2,
-        hidden_dim=[16],
+        latent_dim=4,
+        hidden_dim=[8],
         batch_size=10,
         treatment_effect_fn=lambda x: 0,
         selection_bias_fn=lambda x, t: 0,
@@ -55,24 +55,25 @@ class Credence:
     ):
 
         # generator for T
-        self.m_treat = autoencoder.conVAE(
-            df=self.data_processed,
-            Xnames=[],
-            Ynames=self.Tnames,
-            cat_cols=self.categorical_var,
-            var_bounds=self.var_bounds,
-            latent_dim=latent_dim,
-            hidden_dim=hidden_dim,
-            kld_rigidity=kld_rigidity,
-        )  # .to('cuda:0')
-        bar = pb.ProgressBar()
-        self.trainer_treat = pl.Trainer(
-            max_epochs=max_epochs,
-            callbacks=[bar],
-        )
-        self.trainer_treat.fit(
-            self.m_treat, self.m_treat.train_loader, self.m_treat.val_loader
-        )
+        self.m_treat = self.data_processed[self.Tnames].mean()
+        # self.m_treat = autoencoder.conVAE(
+        #     df=self.data_processed,
+        #     Xnames=[],
+        #     Ynames=self.Tnames,
+        #     cat_cols=self.categorical_var,
+        #     var_bounds=self.var_bounds,
+        #     latent_dim=latent_dim,
+        #     hidden_dim=hidden_dim,
+        #     kld_rigidity=kld_rigidity,
+        # )  # .to('cuda:0')
+        # bar = pb.ProgressBar()
+        # self.trainer_treat = pl.Trainer(
+        #     max_epochs=max_epochs,
+        #     callbacks=[bar],
+        # )
+        # self.trainer_treat.fit(
+        #     self.m_treat, self.m_treat.train_loader, self.m_treat.val_loader
+        # )
 
         # generator for X | T
         self.m_pre = autoencoder.conVAE(
@@ -127,10 +128,13 @@ class Credence:
     def sample(self, num_samples=1000, data=None):
         # initializing latent variables from standard normal distribution
         if data is None:
-            pi_treat = (
-                torch.zeros((num_samples, self.m_treat.latent_dim)),
-                torch.zeros((num_samples, self.m_treat.latent_dim)),
-            )
+            # pi_treat = (
+            #     torch.zeros((num_samples, self.m_treat.latent_dim)),
+            #     torch.zeros((num_samples, self.m_treat.latent_dim)),
+            # )
+            
+            T = torch.bernoulli(torch.ones((num_samples,1))*0.5)
+            
             pi_pre = (
                 torch.zeros((num_samples, self.m_pre.latent_dim)),
                 torch.zeros((num_samples, self.m_pre.latent_dim)),
@@ -145,12 +149,12 @@ class Credence:
             T = torch.tensor(data[self.Tnames].values.astype(float)).float()
             Y = torch.tensor(data[self.Ynames].values.astype(float)).float()
             X = torch.tensor(data[self.Xnames].values.astype(float)).float()
-            pi_treat = self.m_treat.forward(T)
+            # pi_treat = self.m_treat.forward(T)
             pi_pre = self.m_pre.forward(X)
             pi_post = self.m_post.forward(Y)
         
         # sample from conVAE
-        Tgen = self.m_treat.sample(pi=pi_treat, x=torch.empty(size=(num_samples, 0)))
+        Tgen = T #self.m_treat.sample(pi=pi_treat, x=torch.empty(size=(num_samples, 0)))
         Xgen = self.m_pre.sample(pi=pi_pre, x=Tgen)
         Ygen = self.m_post.sample(pi=pi_post, x=torch.cat((Xgen, Tgen), 1))
         Ygen_prime = self.m_post.sample(pi=pi_post, x=torch.cat((Xgen, 1-Tgen), 1))
