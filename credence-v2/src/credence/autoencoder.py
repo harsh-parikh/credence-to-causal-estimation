@@ -96,14 +96,20 @@ class conVAE(pl.LightningModule):
             self.encoder_module.append(
                 nn.Sequential(
                     nn.Linear(self.encoder_dims[layer], self.encoder_dims[layer + 1]),
-                    nn.LeakyReLU(),
+                    nn.LeakyReLU()
                 )
             )
         self.encoder = nn.Sequential(*self.encoder_module)
         
         # embedding layers
-        self.en_mu = nn.Linear(self.hidden_dim[-1], self.latent_dim)
-        self.en_logvar = nn.Linear(self.hidden_dim[-1], self.latent_dim)
+        self.en_a =  nn.Sequential( 
+            nn.Linear(self.hidden_dim[-1], self.latent_dim), 
+            nn.LeakyReLU() 
+        )
+        self.en_b =  nn.Sequential( 
+            nn.Linear(self.hidden_dim[-1], self.latent_dim), 
+            nn.LeakyReLU() 
+        )
 
         # Decoder layers
         self.decoder_module = []
@@ -125,21 +131,22 @@ class conVAE(pl.LightningModule):
         l = self.encoder(y)
         
         # mean and logvariance of the projected point in latent space
-        mu = self.en_mu(l)
-        logvar = self.en_logvar(l)
+        a = self.en_a(l)
+        b = self.en_b(l)
+        b = b * torch.tensor(0.5) + torch.tensor(0.5)
         
-        return (mu, logvar)
+        return (a, b)
 
     def sample(self, pi, x):
         # position in latent space
-        mu, logvar = pi 
+        a, b = pi 
         
-        # generating a standard normal random variable
-        e = torch.randn(mu.shape).to(self.device)
-        std = torch.exp(0.5 * logvar)
+        # generating a standard uniform random variable
+        e = torch.rand(a.shape).to(self.device)
+        # std = torch.exp(0.5 * logvar)
         
         #reparameterization
-        z = mu + std * e
+        z = e*(b-a) + a
         
         # conditioning on x
         z_ = torch.cat((z, x), 1)
@@ -188,7 +195,7 @@ class conVAE(pl.LightningModule):
             # reconstruction loss
             recons = F.mse_loss(yhat, y)
         # KL divergence
-        kld = -0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp())
+        kld = torch.sum( - torch.log(b-a) ) #-0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp())
         recons = recons + self.kld_rigidity * kld
 
         # variable bounds
