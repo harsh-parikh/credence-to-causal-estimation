@@ -186,15 +186,15 @@ def tmle(outcome,treatment,data):
 def estimate_ate(outcome, treatment, data):
     with open(os.devnull, "w") as f, contextlib.redirect_stdout(f):
         ate = {}
-        ate['NonParametric DML'] = dml(outcome, treatment, data, method='GBR')
+        ate['Gradient Boosting Trees DML'] = dml(outcome, treatment, data, method='GBR')
         ate['Linear DML'] = dml(outcome, treatment, data, method='linear')
         ate['Doubly Robust (Linear)'] = doubleRobust(outcome, treatment, data)
         ate['Linear T Learner'] = metalearner(outcome,treatment, data, est='T', method='linear')
         ate['Linear S Learner'] = metalearner(outcome,treatment, data, est='S', method='linear')
         ate['Linear X Learner'] = metalearner(outcome,treatment, data, est='X', method='linear')
-        ate['NonParametric T Learner'] = metalearner(outcome,treatment, data, est='T', method='GBR')
-        ate['NonParametric S Learner'] = metalearner(outcome,treatment, data, est='S', method='GBR')
-        ate['NonParametric X Learner'] = metalearner(outcome,treatment, data, est='X', method='GBR')
+        ate['Gradient Boosting Trees T Learner'] = metalearner(outcome,treatment, data, est='T', method='GBR')
+        ate['Gradient Boosting Trees S Learner'] = metalearner(outcome,treatment, data, est='S', method='GBR')
+        ate['Gradient Boosting Trees X Learner'] = metalearner(outcome,treatment, data, est='X', method='GBR')
         ate['Causal BART'] = bart(outcome,treatment, data)
         ate['Causal Forest'] = causalforest(outcome,treatment, data)
         ate['Propensity Score Matching'] = matchit(outcome,treatment, data, method='nearest')

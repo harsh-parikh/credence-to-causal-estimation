@@ -96,7 +96,9 @@ def project_star():
     
     df_exp_dummified = pd.get_dummies(df_exp,columns=['gender','race'],drop_first=True)
     df_obs_dummified = pd.get_dummies(df_obs,columns=['gender','race'],drop_first=True)
-
+    df_exp_dummified.columns = df_exp_dummified.columns.str.replace(" ", "_")
+    df_obs_dummified.columns = df_obs_dummified.columns.str.replace(" ", "_")
+    
     df_exp_dummified['birthmonth'].replace({'JANUARY':1.0,
                                    'FEBRUARY':2.0,
                                    'MARCH':3.0,
