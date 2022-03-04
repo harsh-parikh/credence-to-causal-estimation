@@ -183,9 +183,13 @@ def tmle(outcome,treatment,data):
     tml.fit()
     return tml.average_treatment_effect
 
+def diff_means(outcome, treatment, data):
+    return data.loc[data[treatment]==1,outcome].mean() - data.loc[data[treatment]==0,outcome].mean()
+
 def estimate_ate(outcome, treatment, data):
     with open(os.devnull, "w") as f, contextlib.redirect_stdout(f):
         ate = {}
+        ate['Diff. of Mean'] = diff_means(outcome, treatment, data)
         ate['Gradient Boosting Trees DML'] = dml(outcome, treatment, data, method='GBR')
         ate['Linear DML'] = dml(outcome, treatment, data, method='linear')
         ate['Doubly Robust (Linear)'] = doubleRobust(outcome, treatment, data)
