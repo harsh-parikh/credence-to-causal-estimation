@@ -131,7 +131,7 @@ def project_star():
 
 def lalonde():
     nsw = pd.read_stata('http://www.nber.org/~rdehejia/data/nsw.dta')
-    psid_control = pd.read_stata('http://www.nber.org/~rdehejia/data/psid_controls.dta')
+    psid_control = pd.read_stata('http://www.nber.org/~rdehejia/data/psid_controls2.dta')
     df_exp = nsw.drop(columns=['data_id'])
     df_obs = nsw.drop(columns=['data_id']).append(psid_control.drop(columns=['data_id','re74']),ignore_index=True)
     return df_exp, df_obs
