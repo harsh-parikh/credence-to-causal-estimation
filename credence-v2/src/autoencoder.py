@@ -5,7 +5,8 @@ from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 import pytorch_lightning as pl
-
+from pytorch_lightning.callbacks import EarlyStopping # QZ: early_stop_callback is deprecated, use callbacks=[EarlyStopping(...)] instead for Trainer arguments 
+from pytorch_lightning.callbacks.progress import RichProgressBar
 # conVAE trains a generator which can generate Y | X
 # the object takes in the input the list of the column names of Y and columns names of X
 
@@ -29,7 +30,8 @@ class conVAE(pl.LightningModule):
         kld_rigidity=0.1,  # strength of KL divergence loss
     ):
         super().__init__()
-        
+        self.save_hyperparameters(ignore=["treatment_effect_fn", "selection_bias_fn"]) # QZ: saves all arguments passed to the __init__ method as hyperparameters for reproducibility and debugging in training pipelines
+
         # initializing internal variables/objects
         self.in_dim = len(Ynames)  # input dimension
         self.con_dim = len(Xnames)  # dimension of variable to condition on
@@ -305,11 +307,15 @@ class conVAE(pl.LightningModule):
         else:
             loss = self.loss_fn(y_hat, y, mu, logvar)  # F.mse_loss(y_hat, y)
 
-        self.log("val_loss", loss)
+        # self.log("val_loss", loss)
+        self.log("val_loss", loss, prog_bar=True, on_epoch=True, on_step=False) # QZ: log validation loss to the rich progress bar
 
-    def fit_model(self, gpus=1, precision=16, limit_train_batches=0.5):
+    def fit_model(self, accelerator='auto', precision='bf16-mixed', max_epochs=100):# QZ: updates in PyTorch Lightning's API
         trainer = pl.Trainer(
-            gpus=gpus, precision=precision, limit_train_batches=limit_train_batches
+            accelerator=accelerator,
+            precision=precision,
+            max_epochs=max_epochs,
+            callbacks=[RichProgressBar(), EarlyStopping(monitor="val_loss", patience=5)]
         )
         trainer.fit(self, self.train_loader, self.val_loader)
         return trainer
