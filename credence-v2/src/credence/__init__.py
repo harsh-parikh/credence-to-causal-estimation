@@ -137,11 +137,11 @@ class Credence:
             
             pi_pre = (
                 torch.zeros((num_samples, self.m_pre.latent_dim)),
-                torch.ones((num_samples, self.m_pre.latent_dim)),
+                torch.zeros((num_samples, self.m_pre.latent_dim)), # QZ: correction: logvar = 0
             )
             pi_post = (
                 torch.zeros((num_samples, self.m_post.latent_dim)),
-                torch.ones((num_samples, self.m_post.latent_dim)),
+                torch.zeros((num_samples, self.m_post.latent_dim)), # QZ: correction: logvar = 0
             )
             
         else:
